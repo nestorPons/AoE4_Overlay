@@ -35,7 +35,8 @@ def set_country_flag(country_code: str, widget: QtWidgets.QLabel):
 class PlayerWidget:
     """ Player widget shown on the overlay"""
 
-    def __init__(self, row: int, toplayout: QtWidgets.QGridLayout):
+    def __init__(self, row: int, toplayout: QtWidgets.QGridLayout, overlay: "AoEOverlay"):
+        self.overlay = overlay
         self.hiding_civ_stats: bool = True
         self.team: int = 0
         self.civ: str = ""
@@ -128,11 +129,17 @@ class PlayerWidget:
         self.civ_median_wins.setText(player_data['civ_win_length_median'])
         self.show(show=bool(player_data['name']))
 
+        self.update_header(player_data)
+
         # Hide civ specific data when there are none
         if not player_data['civ_games'] and self.hiding_civ_stats:
             for widget in (self.civ_games, self.civ_winrate,
                            self.civ_median_wins):
                 widget.hide()
+
+    def update_header(self, game_data):
+        # Update header rank text dynamically
+        self.overlay.update_rank_header(game_data['rank_mode'])
 
     def get_data(self) -> Dict[str, Any]:
         return {
@@ -160,6 +167,10 @@ class AoEOverlay(OverlayWidget):
         self.players = []
         self.setup_as_overlay()
         self.initUI()
+
+    def update_rank_header(self, new_text):
+        """Update header from PlayerWidget"""
+        self.header_rank.setText(new_text)
 
     def setup_as_overlay(self):
         if settings.overlay_geometry is None:
@@ -198,7 +209,7 @@ class AoEOverlay(OverlayWidget):
         country = QtWidgets.QLabel("Country")
         rating = QtWidgets.QLabel("Elo")
         rating.setStyleSheet("color: #7ab6ff; font-weight: bold")
-        rank = QtWidgets.QLabel("Rank")
+        self.header_rank = QtWidgets.QLabel("Rank")
         winrate = QtWidgets.QLabel("Winrate")
         winrate.setStyleSheet("color: #fffb78")
         wins = QtWidgets.QLabel("Wins")
@@ -216,7 +227,7 @@ class AoEOverlay(OverlayWidget):
 
         offset = 0
         for column, widget in enumerate(
-            (country, rating, rank, winrate, wins, losses, self.civ_games,
+            (country, rating, self.header_rank, winrate, wins, losses, self.civ_games,
              self.civ_winrate, self.civ_med_wins)):
             if widget == self.civ_games:
                 offset = 1
@@ -232,7 +243,7 @@ class AoEOverlay(OverlayWidget):
 
     def init_players(self):
         for i in range(8):
-            self.players.append(PlayerWidget(i + 1, self.playerlayout))
+            self.players.append(PlayerWidget(i + 1, self.playerlayout, self))
 
     def update_style(self, font_size: int):
         self.setStyleSheet(

@@ -24,8 +24,8 @@ def get_icon(civ: str) -> QtGui.QIcon:
 
 class InnerPlayer(PlayerWidget):
     """ Overriding player widget and making fields editable"""
-    def __init__(self, row: int, toplayout: QtWidgets.QGridLayout):
-        super().__init__(row, toplayout)
+    def __init__(self, row: int, toplayout: QtWidgets.QGridLayout, overlay: "AoEOverlay"):
+        super().__init__(row, toplayout, overlay)
         self.hiding_civ_stats = False
         self.change_style()
         self.update_name_color()
@@ -152,7 +152,7 @@ class InnerOverlay(AoEOverlay):
 
     def init_players(self):
         for i in range(8):
-            self.players.append(InnerPlayer(i + 1, self.playerlayout))
+            self.players.append(InnerPlayer(i + 1, self.playerlayout, self))
             self.players[-1].connect_to_function(self.changed)
 
     def update_data(self, player_data: Dict[str, Any]):
